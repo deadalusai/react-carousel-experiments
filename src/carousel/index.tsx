@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Animator, AnimationHandle } from "./animator";
+import { Animator, AnimationHandle, easingFunctions } from "./animator";
 
 const ANIMATION_TIME_MS = 300; // ms
 
@@ -15,7 +15,7 @@ interface ICarouselState {
 export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     state = { scrollIndex: 0 };
 
-    animator = new Animator();
+    animator = new Animator(easingFunctions.easeInOutQuad);
     animation = null as AnimationHandle | null;
     container = null as HTMLDivElement | null;
 
@@ -52,7 +52,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
             this.animation.cancel();
         }
         const scrollLeft = targetScrollIndex * this.itemWidth();
-        this.animation = this.animator.scrollToLeft(this.container, scrollLeft, ANIMATION_TIME_MS);
+        this.animation = this.animator.startAnimation(this.container, 'scrollLeft', scrollLeft, ANIMATION_TIME_MS);
         this.animation.end.then((completed) => {
             if (completed) {
                 this.animation = null;

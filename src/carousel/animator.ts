@@ -1,23 +1,15 @@
 
 const CAN_ANIMATE = !!window.requestAnimationFrame;
-const DEFAULT_DURATION = 350;
+
+export type EasingFunction = (time: number, start: number, delta: number, duration: number) => number;
 
 export interface AnimationHandle {
     end: Promise<boolean>;
     cancel (): void;
 }
 
-type ElementProperty = 'scrollTop' | 'scrollLeft';
-
-// easing functions http://goo.gl/5HLl8
-function easeInOutQuad (time: number, start: number, delta: number, duration: number): number {
-    time /= duration / 2;
-    if (time < 1) {
-        return delta / 2 * time * time + start;
-    }
-    time--;
-    return -delta / 2 * (time * (time - 2) - 1) + start;
-}
+// Add props you want to animate here
+type ElementProperty = "scrollTop" | "scrollLeft";
 
 const NULL_ANIMATION_HANDLE: AnimationHandle = {
     end: Promise.resolve(true),
@@ -26,15 +18,9 @@ const NULL_ANIMATION_HANDLE: AnimationHandle = {
 
 export class Animator {
 
-    public scrollToLeft (element: HTMLElement, to: number, duration?: number): AnimationHandle {
-        return this.tryStartAnimation(element, 'scrollLeft', to, duration ?? DEFAULT_DURATION);
-    }
+    constructor(private easingFunction: EasingFunction) {}
 
-    public scrollToTop (element: HTMLElement, to: number, duration?: number): AnimationHandle {
-        return this.tryStartAnimation(element, 'scrollTop', to, duration ?? DEFAULT_DURATION);
-    }
-
-    private tryStartAnimation (element: HTMLElement, property: ElementProperty, to: number, duration: number): AnimationHandle {
+    public startAnimation (element: HTMLElement, property: ElementProperty, to: number, duration: number): AnimationHandle {
         if (!CAN_ANIMATE) {
             element[property] = to;
             return NULL_ANIMATION_HANDLE;
@@ -46,7 +32,7 @@ export class Animator {
         let animationHandle: number | null = null;
         let resolve: (result: boolean) => void; // Initialized by Promise constructor
 
-        const complete = new Promise<boolean>(res => resolve = res);
+        const end = new Promise<boolean>(res => resolve = res);
 
         const step = (timestamp: number) => {
             if (!startTime) {
@@ -54,10 +40,10 @@ export class Animator {
             }
             // Determine time delta.
             // NOTE: time = 0 for the first frame
-            let time = timestamp - startTime;
+            const time = timestamp - startTime;
             if (time <= duration) {
                 // Find the value with the quadratic in-out easing function, then apply the scroll
-                element[property] = easeInOutQuad(time, start, change, duration);
+                element[property] = this.easingFunction(time, start, change, duration);
                 animationHandle = requestAnimationFrame(step);
             } else {
                 element[property] = to;
@@ -75,6 +61,21 @@ export class Animator {
 
         // Start the animation
         animationHandle = requestAnimationFrame(step);
-        return { end: complete, cancel };
+        return { end, cancel };
     }
 }
+
+// easing functions http://goo.gl/5HLl8
+
+const easeInOutQuad: EasingFunction = (time, start, delta, duration) => {
+    time /= duration / 2;
+    if (time < 1) {
+        return delta / 2 * time * time + start;
+    }
+    time--;
+    return -delta / 2 * (time * (time - 2) - 1) + start;
+};
+
+export const easingFunctions = {
+    easeInOutQuad,
+};
