@@ -1,0 +1,60 @@
+/* Body */
+body {
+    padding: 20px;
+}
+
+/* Typography */
+body {
+    font-family: 'Courier New', Courier, monospace;
+}
+h1 { font-weight: 600; font-size: 200%; margin-bottom: 20px; }
+h2 { font-weight: 600; font-size: 180%; margin-bottom: 18px; }
+h3 { font-weight: 600; font-size: 160%; margin-bottom: 16px; }
+h4 { font-weight: 600; font-size: 140%; margin-bottom: 14px; }
+h5 { font-weight: 600; font-size: 120%; margin-bottom: 12px; }
+h6 { font-weight: 600; font-size: 100%; margin-bottom: 10px; }
+
+/* Carousel */
+.bil-carousel {
+    position: relative;
+}
+
+.bil-carousel--controls {
+    position: absolute;
+    width: 100%;
+    margin: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    
+    display: flex;
+    justify-content: space-between;
+}
+
+.bil-carousel--button {
+    
+}
+
+.bil-carousel--container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: scroll;
+    /* Firefox */
+    scrollbar-width: none;
+    /* Internet Explorer 10+ */
+    -ms-overflow-style: none;
+}
+.bil-carousel--container::-webkit-scrollbar {
+    /* WebKit */
+    width: 0;
+    height: 0;
+}
+
+.bil-carousel--item {
+    flex: 0 0 auto;
+    display: flex;
+}
