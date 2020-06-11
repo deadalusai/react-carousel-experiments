@@ -19,8 +19,8 @@ enum ItemVisibility {
     partiallyVisible,
 }
 
-function itemVisibility(viewport: Viewport, childIndex: number): ItemVisibility {
-    const itemLeft = childIndex * viewport.itemWidth;
+function itemVisibility(viewport: Viewport, itemIndex: number): ItemVisibility {
+    const itemLeft = itemIndex * viewport.itemWidth;
     const itemRight = itemLeft + viewport.itemWidth;
     let visiblePercentage = 0;    
     const isOutsideViewport = itemRight < viewport.viewportLeft || itemLeft > viewport.viewportRight;
