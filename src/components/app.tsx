@@ -1,11 +1,12 @@
 import * as React from "react";
 import { Carousel } from 'carousel';
 
-const MAX_ITEMS = 10;
-const item = (index: number) => ({ name: `Item ${index}`, color: hsbToRgb(index * (360 / MAX_ITEMS), 100, 100) });
-const items = new Array(MAX_ITEMS).fill(0).map((_, index) => item(index));
+const item = (index: number, max: number) => ({ name: `Item ${index}`, color: hsbToRgb(index * (360 / max), 100, 100) });
+const makeItems = (count: number) => new Array(count).fill(0).map((_, index) => item(index, count));
 
 export function App() {
+    const [items, setItems] = React.useState(() => makeItems(3));
+
     const containerStyle: React.CSSProperties = {
         width: '600px',
         height: '200px',
@@ -24,6 +25,9 @@ export function App() {
                 )}
             </Carousel>
         </section>
+        <button onClick={() => setItems(makeItems(items.length + 1))}>
+            Add item
+        </button>
     </>;
 }
 

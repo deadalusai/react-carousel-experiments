@@ -25,8 +25,8 @@ export class Animator {
             element[property] = to;
             return NULL_ANIMATION_HANDLE;
         }
-        const start = element[property];
-        const change = to - start;
+        const from = element[property];
+        const delta = to - from;
 
         let startTime: number | null = null; // NOTE: For the first frame we do not have a time reference.
         let animationHandle: number | null = null;
@@ -43,7 +43,7 @@ export class Animator {
             const time = timestamp - startTime;
             if (time <= duration) {
                 // Find the value with the quadratic in-out easing function, then apply the scroll
-                element[property] = this.easingFunction(time, start, change, duration);
+                element[property] = this.easingFunction(time, from, delta, duration);
                 animationHandle = requestAnimationFrame(step);
             } else {
                 element[property] = to;
