@@ -3,7 +3,7 @@ const CAN_ANIMATE = !!window.requestAnimationFrame;
 const DEFAULT_DURATION = 350;
 
 export interface AnimationHandle {
-    complete: Promise<boolean>;
+    end: Promise<boolean>;
     cancel (): void;
 }
 
@@ -20,7 +20,7 @@ function easeInOutQuad (time: number, start: number, delta: number, duration: nu
 }
 
 const NULL_ANIMATION_HANDLE: AnimationHandle = {
-    complete: Promise.resolve(true),
+    end: Promise.resolve(true),
     cancel: () => { return; },
 };
 
@@ -75,6 +75,6 @@ export class Animator {
 
         // Start the animation
         animationHandle = requestAnimationFrame(step);
-        return { complete, cancel };
+        return { end: complete, cancel };
     }
 }
