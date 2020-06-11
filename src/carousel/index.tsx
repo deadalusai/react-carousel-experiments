@@ -53,17 +53,17 @@ interface ICarouselState {
 export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     state = {
         scrollIndex: 0,
-        isFullyScrolledLeft: true,
+        isFullyScrolledLeft: false,
         isFullyScrolledRight: false,
     };
 
-    animator = new Animator(easingFunctions.easeInOutQuad);
-    animation = null as AnimationHandle | null;
-    viewportEl = null as HTMLDivElement | null;
+    private animator = new Animator(easingFunctions.easeInOutQuad);
+    private animation = null as AnimationHandle | null;
+    private viewportEl = null as HTMLDivElement | null;
 
     public render() {
         return <div className="bil-carousel">
-            <div className="bil-carousel--container" onScroll={this.handleScroll} ref={(el) => this.viewportEl = el}>
+            <div className="bil-carousel--container" onScroll={this.handleScroll} ref={this.initializeViewport}>
                 {this.props.children.map((child, index) =>
                     <div key={index} className="bil-carousel--item">
                         {child}
@@ -81,7 +81,20 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         </div>;
     }
 
-    viewport = (): Viewport => {
+    public componentDidUpdate = (prevProps: ICarouselProps) => {
+        if (this.props.children.length != prevProps.children.length) {
+            this.updateScrollState();
+        }
+    };
+
+    private initializeViewport = (el: HTMLDivElement) => {
+        this.viewportEl = el;
+        if (this.viewportEl) {
+            this.updateScrollState();
+        }
+    };
+
+    private viewport = (): Viewport => {
         if (!this.viewportEl) {
             throw new Error("Tried to read viewport before ref loaded");
         }
@@ -96,7 +109,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         };
     };
     
-    animateScrollToIndex = (targetIndex: number) => {
+    private animateScrollToIndex = (targetIndex: number) => {
         if (this.animation) {
             this.animation.cancel();
         }
@@ -112,7 +125,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         });
     };
     
-    handleScroll = () => {
+    private handleScroll = () => {
         if (this.animation) {
             // Skip updating scroll state while the animation is in progress
             return;
@@ -120,26 +133,38 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         this.updateScrollState();
     };
 
-    updateScrollState = () => {
+    private updateScrollState = () => {
         const viewport = this.viewport();
         // Determine where we're scrolled to by finding the first fully-visible child from left to right
+        let minPartialIndex = Infinity;
         let minVisibleIndex = Infinity;
         let maxVisibleIndex = 0;
         for (let itemIndex = 0; itemIndex < viewport.itemCount; itemIndex++) {
             const visibility = itemVisibility(viewport, itemIndex);
-            if (visibility === ItemVisibility.fullyVisible) {
+            if (visibility === ItemVisibility.partiallyVisible) {
+                minPartialIndex = Math.min(minPartialIndex, itemIndex);
+            }
+            else if (visibility === ItemVisibility.fullyVisible) {
                 minVisibleIndex = Math.min(minVisibleIndex, itemIndex);
                 maxVisibleIndex = Math.max(maxVisibleIndex, itemIndex);
             }
         }
+        // Handle empty collection or zero-width items
+        if (!isFinite(minVisibleIndex)) {
+            minVisibleIndex = 0;
+        }
+        // Handle no partially-visible items
+        if (!isFinite(minPartialIndex)) {
+            minPartialIndex = minVisibleIndex;
+        }
         this.setState({
-            scrollIndex: minVisibleIndex,
+            scrollIndex: minPartialIndex,
             isFullyScrolledLeft: minVisibleIndex === 0,
             isFullyScrolledRight: maxVisibleIndex === (viewport.itemCount - 1),
         });
     };
     
-    goLeft = (e: React.MouseEvent) => {
+    private goLeft = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         let scrollIndex = this.state.scrollIndex - 1;
@@ -150,7 +175,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         this.animateScrollToIndex(scrollIndex);
     };
     
-    goRight = (e: React.MouseEvent) => {
+    private goRight = (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         let scrollIndex = this.state.scrollIndex + 1;
