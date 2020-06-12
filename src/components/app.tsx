@@ -6,6 +6,7 @@ const makeItems = (count: number) => new Array(count).fill(0).map((_, index) => 
 
 export function App() {
     const [items, setItems] = React.useState(() => makeItems(3));
+    const [showCarousel, setShowCarousel] = React.useState(true);
 
     const containerStyle: React.CSSProperties = {
         width: '600px',
@@ -16,17 +17,23 @@ export function App() {
         width: '150px',
     };
     return <>
+        {showCarousel &&
         <section style={containerStyle}>
-            <Carousel>
+                <Carousel animationTimeMs={300}>
                 {items.map(x =>
                     <div key={x.name} style={{ ...itemStyle, backgroundColor: x.color }}>
                         {x.name}
-                    </div>
-                )}
+                        </div>)}
             </Carousel>
-        </section>
+            </section>}
         <button onClick={() => setItems(makeItems(items.length + 1))}>
             Add item
+        </button>
+        <button onClick={() => setItems(makeItems(Math.max(0, items.length - 1)))}>
+            Remove item
+        </button>
+        <button onClick={() => setShowCarousel(!showCarousel)}>
+            {showCarousel ? "Hide carousel" : "Show carousel"}
         </button>
     </>;
 }

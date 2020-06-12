@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { Animator, AnimationHandle, easingFunctions } from "./animator";
 
-const ANIMATION_TIME_MS = 300; // ms
+const DEFAULT_ANIMATION_TIME_MS = 300; // ms
 
 interface Viewport {
     el: HTMLElement;
@@ -41,6 +41,7 @@ function itemVisibility(viewport: Viewport, itemIndex: number): ItemVisibility {
 }
 
 export interface ICarouselProps {
+    animationTimeMs?: number;
     children: React.ReactNode[];
 }
 
@@ -122,7 +123,8 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         const viewport = this.viewport();
         // Determine where we're scrolling to
         const scrollLeft = targetIndex * viewport.itemWidth;
-        this.animation = this.animator.startAnimation(viewport.el, 'scrollLeft', scrollLeft, ANIMATION_TIME_MS);
+        const animationMs = this.props.animationTimeMs ?? DEFAULT_ANIMATION_TIME_MS;
+        this.animation = this.animator.startAnimation(viewport.el, 'scrollLeft', scrollLeft, animationMs);
         this.animation.end.then((completed) => {
             if (completed) {
                 this.animation = null;
