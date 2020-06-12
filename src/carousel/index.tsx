@@ -3,6 +3,7 @@ import * as React from "react";
 import { Animator, AnimationHandle, easingFunctions } from "./animator";
 
 const DEFAULT_ANIMATION_TIME_MS = 300; // ms
+const DEFAULT_PAGE_SIZE = 1;
 
 interface ViewportInfo {
     el: HTMLElement;
@@ -23,7 +24,7 @@ enum ItemVisibility {
     partiallyVisible,
 }
 
-function itemVisibility(viewport: ViewportInfo, item: ItemInfo): ItemVisibility {
+function calculateItemVisibility(viewport: ViewportInfo, item: ItemInfo): ItemVisibility {
     const itemLeft = item.offsetLeft;
     const itemRight = itemLeft + item.itemWidth;
     let visiblePercentage = 0;    
@@ -46,6 +47,7 @@ function itemVisibility(viewport: ViewportInfo, item: ItemInfo): ItemVisibility 
 
 export interface ICarouselProps {
     animationTimeMs?: number;
+    pageSize?: number;
     children: React.ReactNode[];
 }
 
@@ -55,7 +57,7 @@ interface ICarouselState {
     isFullyScrolledRight: boolean;
 }
 
-export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
+export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState> {
     public state = {
         scrollIndex: 0,
         isFullyScrolledLeft: false,
@@ -89,6 +91,10 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         </div>;
     }
 
+    public componentDidMount() {
+        this.updateScrollState();
+    }
+
     public componentDidUpdate(prevProps: ICarouselProps) {
         if (this.props.children.length != prevProps.children.length) {
             this.updateScrollState();
@@ -99,10 +105,6 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         if (this.animation) {
             this.animation.cancel();
         }
-    }
-
-    public componentDidMount() {
-        this.updateScrollState();
     }
 
     private viewportInfo(): ViewportInfo {
@@ -131,6 +133,9 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         };
     }
     
+    // TODO: Can we use CSS scroll-snap-type and scroll-snap-align?
+    // The user interaction is nice, but not sure how to trigger scrolls programmatically.
+
     private animateScrollToIndex(targetIndex: number) {
         if (this.animation) {
             this.animation.cancel();
@@ -164,7 +169,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         let maxVisibleIndex = 0;
         for (let itemIndex = 0; itemIndex < itemCount; itemIndex++) {
             const item = this.itemInfo(itemIndex);
-            const visibility = itemVisibility(viewport, item);
+            const visibility = calculateItemVisibility(viewport, item);
             if (visibility === ItemVisibility.partiallyVisible) {
                 minPartialIndex = Math.min(minPartialIndex, itemIndex);
             }
@@ -189,7 +194,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     private goLeft(e: React.MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
-        let scrollIndex = this.state.scrollIndex - 1;
+        let scrollIndex = this.state.scrollIndex - (this.props.pageSize ?? DEFAULT_PAGE_SIZE);
         if (scrollIndex < 0) {
             scrollIndex = 0;
         }
@@ -200,10 +205,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
     private goRight(e: React.MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
-        let scrollIndex = this.state.scrollIndex + 1;
-        if (scrollIndex >= this.props.children.length) {
-            scrollIndex = this.props.children.length - 1;
-        }
+        const scrollIndex = this.state.scrollIndex + (this.props.pageSize ?? DEFAULT_PAGE_SIZE);
         this.setState({ scrollIndex });
         this.animateScrollToIndex(scrollIndex);
     }

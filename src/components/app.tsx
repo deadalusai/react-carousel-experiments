@@ -4,7 +4,7 @@ import { Carousel } from 'carousel';
 const item = (index: number, max: number) => {
     return {
         name: `Item ${index}`,
-        width: `${100 + (Math.cos((Math.PI / 2) * index) * 25)}px`,
+        width: `${150 + Math.round(Math.cos((Math.PI / 2) * index) * 25)}px`,
         color: hsbToRgb(index * (360 / max), 100, 100),
     };
 };
@@ -13,19 +13,20 @@ const makeItems = (count: number) => new Array(count).fill(0).map((_, index) => 
 export function App() {
     const [items, setItems] = React.useState(() => makeItems(15));
     const [showCarousel, setShowCarousel] = React.useState(true);
-
     const containerStyle: React.CSSProperties = {
-        width: '550px',
         height: '200px',
         border: '1px solid black',
     };
     return <>
         {showCarousel &&
             <section style={containerStyle}>
-                <Carousel animationTimeMs={300}>
+                <Carousel
+                    animationTimeMs={300}
+                    pageSize={3}>
                     {items.map(x =>
                         <div key={x.name} style={{ width: x.width, backgroundColor: x.color }}>
-                            {x.name}
+                            <h4>{x.name}</h4>
+                            <p>({x.width})</p>
                         </div>)}
                 </Carousel>
             </section>}
