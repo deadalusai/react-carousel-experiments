@@ -161,14 +161,12 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         if (!isFinite(minVisibleIndex)) {
             minVisibleIndex = 0;
         }
-        // Handle no partially-visible items
-        if (!isFinite(minPartialIndex)) {
-            minPartialIndex = minVisibleIndex;
-        }
+        // The "scrollIndex" represents the left-most visible or partially visible item.
+        const scrollIndex = Math.min(minVisibleIndex, minPartialIndex);
         this.setState({
-            scrollIndex: minPartialIndex,
-            isFullyScrolledLeft: minVisibleIndex === 0,
-            isFullyScrolledRight: maxVisibleIndex === (viewport.itemCount - 1),
+            scrollIndex,
+            isFullyScrolledLeft: viewport.itemCount === 0 || minVisibleIndex === 0,
+            isFullyScrolledRight: viewport.itemCount === 0 || maxVisibleIndex === (viewport.itemCount - 1),
         });
     };
     

@@ -9,7 +9,7 @@ export function App() {
     const [showCarousel, setShowCarousel] = React.useState(true);
 
     const containerStyle: React.CSSProperties = {
-        width: '600px',
+        width: '550px',
         height: '200px',
         border: '1px solid black',
     };
@@ -18,13 +18,13 @@ export function App() {
     };
     return <>
         {showCarousel &&
-        <section style={containerStyle}>
+            <section style={containerStyle}>
                 <Carousel animationTimeMs={300}>
-                {items.map(x =>
-                    <div key={x.name} style={{ ...itemStyle, backgroundColor: x.color }}>
-                        {x.name}
+                    {items.map(x =>
+                        <div key={x.name} style={{ ...itemStyle, backgroundColor: x.color }}>
+                            {x.name}
                         </div>)}
-            </Carousel>
+                </Carousel>
             </section>}
         <button onClick={() => setItems(makeItems(items.length + 1))}>
             Add item
