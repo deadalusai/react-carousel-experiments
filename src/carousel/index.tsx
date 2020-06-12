@@ -87,6 +87,12 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         }
     };
 
+    public componentWillUnmount = () => {
+        if (this.animation) {
+            this.animation.cancel();
+        }
+    };
+
     private initializeViewport = (el: HTMLDivElement) => {
         this.viewportEl = el;
         if (this.viewportEl) {
