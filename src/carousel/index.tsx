@@ -4,13 +4,17 @@ import { Animator, AnimationHandle, easingFunctions } from "./animator";
 
 const DEFAULT_ANIMATION_TIME_MS = 300; // ms
 
-interface Viewport {
+interface ViewportInfo {
     el: HTMLElement;
     viewportWidth: number;
     viewportLeft: number;
     viewportRight: number;
+}
+
+interface ItemInfo {
+    el: HTMLElement;
+    offsetLeft: number;
     itemWidth: number;
-    itemCount: number;
 }
 
 enum ItemVisibility {
@@ -19,9 +23,9 @@ enum ItemVisibility {
     partiallyVisible,
 }
 
-function itemVisibility(viewport: Viewport, itemIndex: number): ItemVisibility {
-    const itemLeft = itemIndex * viewport.itemWidth;
-    const itemRight = itemLeft + viewport.itemWidth;
+function itemVisibility(viewport: ViewportInfo, item: ItemInfo): ItemVisibility {
+    const itemLeft = item.offsetLeft;
+    const itemRight = itemLeft + item.itemWidth;
     let visiblePercentage = 0;    
     const isOutsideViewport = itemRight < viewport.viewportLeft || itemLeft > viewport.viewportRight;
     if (!isOutsideViewport) {
@@ -29,7 +33,7 @@ function itemVisibility(viewport: Viewport, itemIndex: number): ItemVisibility {
         let visibleLeft = Math.max(itemLeft, viewport.viewportLeft);
         let visibleRight = Math.min(itemRight, viewport.viewportRight);
         let visibleWidth = visibleRight - visibleLeft;
-        visiblePercentage = visibleWidth / viewport.itemWidth;
+        visiblePercentage = visibleWidth / item.itemWidth;
     }
     return (
         // NOTE: We consider an item "fully visible" if at least 95% of it is visible
@@ -60,95 +64,107 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
 
     private animator = new Animator(easingFunctions.easeInOutQuad);
     private animation = null as AnimationHandle | null;
-    private viewportEl = null as HTMLDivElement | null;
+    
+    private viewportElement = null as HTMLDivElement | null;
+    private itemElements = [] as Array<HTMLDivElement | null>;
 
     public render() {
         return <div className="bil-carousel">
-            <div className="bil-carousel--container" onScroll={this.handleScroll} ref={this.initializeViewport}>
+            <div className="bil-carousel--container" ref={el => this.viewportElement = el} onScroll={() => this.handleScroll()}>
                 {this.props.children.map((child, index) =>
-                    <div key={index} className="bil-carousel--item">
+                    <div key={index} className="bil-carousel--item" ref={el => this.itemElements[index] = el}>
                         {child}
-                    </div>
-                )}
+                    </div>)}
             </div>
+            
             <div className="bil-carousel--controls">
-                <button className="bil-carousel--button" onClick={this.goLeft} disabled={this.state.isFullyScrolledLeft}>
+                <button className="bil-carousel--button" onClick={e => this.goLeft(e)} disabled={this.state.isFullyScrolledLeft}>
                     Prev
                 </button>
-                <button className="bil-carousel--button" onClick={this.goRight} disabled={this.state.isFullyScrolledRight}>
+                {`scrollIndex: ${this.state.scrollIndex}`}
+                <button className="bil-carousel--button" onClick={e => this.goRight(e)} disabled={this.state.isFullyScrolledRight}>
                     Next
                 </button>
             </div>
         </div>;
     }
 
-    public componentDidUpdate = (prevProps: ICarouselProps) => {
+    public componentDidUpdate(prevProps: ICarouselProps) {
         if (this.props.children.length != prevProps.children.length) {
             this.updateScrollState();
         }
-    };
+    }
 
-    public componentWillUnmount = () => {
+    public componentWillUnmount() {
         if (this.animation) {
             this.animation.cancel();
         }
-    };
+    }
 
-    private initializeViewport = (el: HTMLDivElement) => {
-        this.viewportEl = el;
-        if (this.viewportEl) {
-            this.updateScrollState();
-        }
-    };
+    public componentDidMount() {
+        this.updateScrollState();
+    }
 
-    private viewport = (): Viewport => {
-        if (!this.viewportEl) {
-            throw new Error("Tried to read viewport before ref loaded");
+    private viewportInfo(): ViewportInfo {
+        if (!this.viewportElement) {
+            throw new Error("Tried to read viewport before component mounted");
         }
-        const { scrollLeft, clientWidth, scrollWidth } = this.viewportEl;
+        const { scrollLeft, clientWidth } = this.viewportElement;
         return {
-            el: this.viewportEl,
+            el: this.viewportElement,
             viewportWidth: clientWidth,
             viewportLeft: scrollLeft,
             viewportRight: scrollLeft + clientWidth,
-            itemWidth: scrollWidth / this.props.children.length, // NOTE: Assuming all items are of equal width
-            itemCount: this.props.children.length,
         };
-    };
+    }
+
+    private itemInfo(index: number): ItemInfo {
+        const itemEl = this.itemElements[index];
+        if (!itemEl) {
+            throw new Error("Tried to read item before component mounted");
+        }
+        const { offsetLeft, clientWidth } = itemEl;
+        return {
+            el: itemEl,
+            offsetLeft: offsetLeft,
+            itemWidth: clientWidth,
+        };
+    }
     
-    private animateScrollToIndex = (targetIndex: number) => {
+    private animateScrollToIndex(targetIndex: number) {
         if (this.animation) {
             this.animation.cancel();
         }
-        const viewport = this.viewport();
-        // Determine where we're scrolling to
-        const scrollLeft = targetIndex * viewport.itemWidth;
+        const viewport = this.viewportInfo();
+        const item = this.itemInfo(targetIndex);
         const animationMs = this.props.animationTimeMs ?? DEFAULT_ANIMATION_TIME_MS;
-        this.animation = this.animator.startAnimation(viewport.el, 'scrollLeft', scrollLeft, animationMs);
+        this.animation = this.animator.startAnimation(viewport.el, 'scrollLeft', item.offsetLeft, animationMs);
         this.animation.end.then((completed) => {
             if (completed) {
                 this.animation = null;
                 this.updateScrollState();
             }
         });
-    };
+    }
     
-    private handleScroll = () => {
+    private handleScroll() {
+        // Skip updating scroll state while the animation is in progress
         if (this.animation) {
-            // Skip updating scroll state while the animation is in progress
             return;
         }
         this.updateScrollState();
-    };
+    }
 
-    private updateScrollState = () => {
-        const viewport = this.viewport();
+    private updateScrollState() {
+        const itemCount = this.props.children.length;
+        const viewport = this.viewportInfo();
         // Determine where we're scrolled to by finding the first fully-visible child from left to right
         let minPartialIndex = Infinity;
         let minVisibleIndex = Infinity;
         let maxVisibleIndex = 0;
-        for (let itemIndex = 0; itemIndex < viewport.itemCount; itemIndex++) {
-            const visibility = itemVisibility(viewport, itemIndex);
+        for (let itemIndex = 0; itemIndex < itemCount; itemIndex++) {
+            const item = this.itemInfo(itemIndex);
+            const visibility = itemVisibility(viewport, item);
             if (visibility === ItemVisibility.partiallyVisible) {
                 minPartialIndex = Math.min(minPartialIndex, itemIndex);
             }
@@ -165,12 +181,12 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         const scrollIndex = Math.min(minVisibleIndex, minPartialIndex);
         this.setState({
             scrollIndex,
-            isFullyScrolledLeft: viewport.itemCount === 0 || minVisibleIndex === 0,
-            isFullyScrolledRight: viewport.itemCount === 0 || maxVisibleIndex === (viewport.itemCount - 1),
+            isFullyScrolledLeft: itemCount === 0 || minVisibleIndex === 0,
+            isFullyScrolledRight: itemCount === 0 || maxVisibleIndex === (itemCount - 1),
         });
     };
     
-    private goLeft = (e: React.MouseEvent) => {
+    private goLeft(e: React.MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
         let scrollIndex = this.state.scrollIndex - 1;
@@ -181,7 +197,7 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         this.animateScrollToIndex(scrollIndex);
     };
     
-    private goRight = (e: React.MouseEvent) => {
+    private goRight(e: React.MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
         let scrollIndex = this.state.scrollIndex + 1;
@@ -190,5 +206,5 @@ export class Carousel extends React.Component<ICarouselProps, ICarouselState> {
         }
         this.setState({ scrollIndex });
         this.animateScrollToIndex(scrollIndex);
-    };
+    }
 }

@@ -1,11 +1,17 @@
 import * as React from "react";
 import { Carousel } from 'carousel';
 
-const item = (index: number, max: number) => ({ name: `Item ${index}`, color: hsbToRgb(index * (360 / max), 100, 100) });
+const item = (index: number, max: number) => {
+    return {
+        name: `Item ${index}`,
+        width: `${100 + (Math.cos((Math.PI / 2) * index) * 25)}px`,
+        color: hsbToRgb(index * (360 / max), 100, 100),
+    };
+};
 const makeItems = (count: number) => new Array(count).fill(0).map((_, index) => item(index, count));
 
 export function App() {
-    const [items, setItems] = React.useState(() => makeItems(3));
+    const [items, setItems] = React.useState(() => makeItems(15));
     const [showCarousel, setShowCarousel] = React.useState(true);
 
     const containerStyle: React.CSSProperties = {
@@ -13,15 +19,12 @@ export function App() {
         height: '200px',
         border: '1px solid black',
     };
-    const itemStyle: React.CSSProperties = {
-        width: '150px',
-    };
     return <>
         {showCarousel &&
             <section style={containerStyle}>
                 <Carousel animationTimeMs={300}>
                     {items.map(x =>
-                        <div key={x.name} style={{ ...itemStyle, backgroundColor: x.color }}>
+                        <div key={x.name} style={{ width: x.width, backgroundColor: x.color }}>
                             {x.name}
                         </div>)}
                 </Carousel>
