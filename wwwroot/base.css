@@ -20,7 +20,7 @@ h6 { font-weight: 600; font-size: 100%; margin-bottom: 10px; }
     position: relative;
 }
 
-.bil-carousel--controls {
+.bil-carousel__controls {
     position: absolute;
     width: 100%;
     margin: 0;
@@ -31,11 +31,11 @@ h6 { font-weight: 600; font-size: 100%; margin-bottom: 10px; }
     justify-content: space-between;
 }
 
-.bil-carousel--button {
+.bil-carousel__button {
     
 }
 
-.bil-carousel--container {
+.bil-carousel__container {
     position: relative;
     width: 100%;
     height: 100%;
@@ -49,13 +49,13 @@ h6 { font-weight: 600; font-size: 100%; margin-bottom: 10px; }
     /* Internet Explorer 10+ */
     -ms-overflow-style: none;
 }
-.bil-carousel--container::-webkit-scrollbar {
+.bil-carousel__container::-webkit-scrollbar {
     /* WebKit */
     width: 0;
     height: 0;
 }
 
-.bil-carousel--item {
+.bil-carousel__item {
     flex: 0 0 auto;
     display: flex;
 }

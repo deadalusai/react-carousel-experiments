@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { classString } from "./util";
 import { Animator, AnimationHandle, easingFunctions } from "./animator";
 
 const DEFAULT_ANIMATION_TIME_MS = 300; // ms
@@ -18,6 +19,15 @@ interface ItemInfo {
     itemWidth: number;
 }
 
+function itemInfoCacheEntry(el: HTMLElement) {
+    const { offsetLeft, clientWidth } = el;
+    return {
+        el,
+        offsetLeft: offsetLeft,
+        itemWidth: clientWidth,
+    };
+}
+
 enum ItemVisibility {
     notVisible,
     fullyVisible,
@@ -27,21 +37,20 @@ enum ItemVisibility {
 function calculateItemVisibility(viewport: ViewportInfo, item: ItemInfo): ItemVisibility {
     const itemLeft = item.offsetLeft;
     const itemRight = itemLeft + item.itemWidth;
-    let visiblePercentage = 0;    
     const isOutsideViewport = itemRight < viewport.viewportLeft || itemLeft > viewport.viewportRight;
-    if (!isOutsideViewport) {
-        // Item is partially or fully contained by viewport
-        let visibleLeft = Math.max(itemLeft, viewport.viewportLeft);
-        let visibleRight = Math.min(itemRight, viewport.viewportRight);
-        let visibleWidth = visibleRight - visibleLeft;
-        visiblePercentage = visibleWidth / item.itemWidth;
+    if (isOutsideViewport) {
+        return ItemVisibility.notVisible;
     }
+    // Item is partially or fully contained by viewport
+    const visibleLeft = Math.max(itemLeft, viewport.viewportLeft);
+    const visibleRight = Math.min(itemRight, viewport.viewportRight);
+    const visibleWidth = visibleRight - visibleLeft;
+    const visiblePercentage = visibleWidth / item.itemWidth;
     return (
-        // NOTE: We consider an item "fully visible" if at least 95% of it is visible
+        // We consider an item "fully visible" if at least 95% of it is visible
         (visiblePercentage >= 0.95) ? ItemVisibility.fullyVisible :
-        // NOTE: We consider an item "partially visible" if at least 5% of it is visible
-        (visiblePercentage >= 0.05) ? ItemVisibility.partiallyVisible :
-            ItemVisibility.notVisible
+        // We consider an item "partially visible" if at least 5% of it is visible
+        (visiblePercentage >= 0.05) ? ItemVisibility.partiallyVisible : ItemVisibility.notVisible
     );
 }
 
@@ -67,24 +76,55 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
     private animator = new Animator(easingFunctions.easeInOutQuad);
     private animation = null as AnimationHandle | null;
     
-    private viewportElement = null as HTMLDivElement | null;
-    private itemElements = [] as Array<HTMLDivElement | null>;
+    private viewport = null as HTMLDivElement | null;
+    private itemInfoCache = [] as Array<ItemInfo | null>;
 
     public render() {
+        const lastItemIndex = this.props.children.length - 1;
         return <div className="bil-carousel">
-            <div className="bil-carousel--container" ref={el => this.viewportElement = el} onScroll={() => this.handleScroll()}>
+            <div
+                ref={el => this.viewport = el}
+                className={classString(
+                    "bil-carousel__container",
+                    this.state.isFullyScrolledLeft && "bil-carousel__container--fully-scrolled-left",
+                    this.state.isFullyScrolledRight && "bil-carousel__container--fully-scrolled-right"
+                )}
+                onScroll={() => this.handleScroll()}>
+                
                 {this.props.children.map((child, index) =>
-                    <div key={index} className="bil-carousel--item" ref={el => this.itemElements[index] = el}>
+                    <div
+                        key={index}
+                        ref={el => this.itemInfoCache[index] = el && itemInfoCacheEntry(el)}
+                        className={classString(
+                            "bil-carousel__item",
+                            index === 0 && "bil-carousel__item--first",
+                            index === lastItemIndex && "bil-carousel__item--last"
+                        )}>
                         {child}
-                    </div>)}
+                    </div>
+                )}
+
             </div>
             
-            <div className="bil-carousel--controls">
-                <button className="bil-carousel--button" onClick={e => this.goLeft(e)} disabled={this.state.isFullyScrolledLeft}>
+            <div className="bil-carousel__controls">
+                <button
+                    className={classString(
+                        "bil-carousel__button",
+                        "bil-carousel__button--left",
+                        this.state.isFullyScrolledLeft && "bil-carousel__button--disabled",
+                    )}
+                    onClick={e => this.goLeft(e)}
+                    disabled={this.state.isFullyScrolledLeft}>
                     Prev
                 </button>
-                {`scrollIndex: ${this.state.scrollIndex}`}
-                <button className="bil-carousel--button" onClick={e => this.goRight(e)} disabled={this.state.isFullyScrolledRight}>
+                <button
+                    className={classString(
+                        "bil-carousel__button",
+                        "bil-carousel__button--right",
+                        this.state.isFullyScrolledRight && "bil-carousel__button--disabled",
+                    )}
+                    onClick={e => this.goRight(e)}
+                    disabled={this.state.isFullyScrolledRight}>
                     Next
                 </button>
             </div>
@@ -108,12 +148,13 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
     }
 
     private viewportInfo(): ViewportInfo {
-        if (!this.viewportElement) {
-            throw new Error("Tried to read viewport before component mounted");
+        if (!this.viewport) {
+            throw new Error("Tried to read viewport state before component mounted");
         }
-        const { scrollLeft, clientWidth } = this.viewportElement;
+        // NOTE: Always retrieve up-to-date information about the viewport (scroll position changes frequently)
+        const { scrollLeft, clientWidth } = this.viewport;
         return {
-            el: this.viewportElement,
+            el: this.viewport,
             viewportWidth: clientWidth,
             viewportLeft: scrollLeft,
             viewportRight: scrollLeft + clientWidth,
@@ -121,16 +162,12 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
     }
 
     private itemInfo(index: number): ItemInfo {
-        const itemEl = this.itemElements[index];
-        if (!itemEl) {
-            throw new Error("Tried to read item before component mounted");
+        // NOTE: Item width and position information is assumed to be fixed/unchanging and is cached on mount
+        const itemInfo = this.itemInfoCache[index];
+        if (!itemInfo) {
+            throw new Error("Tried to read item cache before component mounted");
         }
-        const { offsetLeft, clientWidth } = itemEl;
-        return {
-            el: itemEl,
-            offsetLeft: offsetLeft,
-            itemWidth: clientWidth,
-        };
+        return itemInfo;
     }
     
     // TODO: Can we use CSS scroll-snap-type and scroll-snap-align?
@@ -147,16 +184,11 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
         this.animation.end.then((completed) => {
             if (completed) {
                 this.animation = null;
-                this.updateScrollState();
             }
         });
     }
     
     private handleScroll() {
-        // Skip updating scroll state while the animation is in progress
-        if (this.animation) {
-            return;
-        }
         this.updateScrollState();
     }
 
