@@ -1,28 +1,36 @@
 import * as React from "react";
 import { Carousel } from 'carousel';
 
-const item = (index: number, max: number) => {
+const item = (index: number, max: number, fixedWidth: boolean) => {
     return {
         name: `Item ${index}`,
-        width: `${150 + Math.round(Math.cos((Math.PI / 2) * index) * 25)}px`,
+        width: fixedWidth ? '150px' : `${150 + Math.round(Math.cos((Math.PI / 2) * index) * 25)}px`,
         color: hsbToRgb(index * (360 / max), 100, 100),
     };
 };
-const makeItems = (count: number) => new Array(count).fill(0).map((_, index) => item(index, count));
+const makeItems = (count: number, fixedWidth: boolean) => new Array(count).fill(0).map((_, index) => item(index, count, fixedWidth));
 
 export function App() {
-    const [items, setItems] = React.useState(() => makeItems(15));
+    const [fixedWidthItems, setFixedWidthItems] = React.useState(true);
+    const [itemCount, setItemCount] = React.useState(15);
     const [showCarousel, setShowCarousel] = React.useState(true);
+    const [scrollToMiddle, setScrollToMiddle] = React.useState(true);
+    const [scrollIndex, setScrollIndex] = React.useState(6);
+    const items = makeItems(itemCount, fixedWidthItems);
     const containerStyle: React.CSSProperties = {
         height: '200px',
+        width: '750px', // 5 x 150
         border: '1px solid black',
     };
     return <>
         {showCarousel &&
             <section style={containerStyle}>
                 <Carousel
-                    animationTimeMs={300}
-                    pageSize={3}>
+                    scrollPageSize={3}
+                    scrollBehavior={scrollToMiddle ? "ScrollToMiddle" : "ScrollToLeft"}
+                    scrollDurationMs={300}
+                    scrollIndex={scrollIndex}
+                    scrollIndexChanged={setScrollIndex}>
                     {items.map(x =>
                         <div key={x.name} style={{ width: x.width, backgroundColor: x.color }}>
                             <h4>{x.name}</h4>
@@ -30,14 +38,26 @@ export function App() {
                         </div>)}
                 </Carousel>
             </section>}
-        <button onClick={() => setItems(makeItems(items.length + 1))}>
+        <div>
+            {`scrollIndex: ${scrollIndex}`}
+        </div>
+        <button onClick={() => setItemCount(itemCount + 1)}>
             Add item
         </button>
-        <button onClick={() => setItems(makeItems(Math.max(0, items.length - 1)))}>
+        <button onClick={() => setItemCount(Math.max(0, itemCount - 1))}>
             Remove item
+        </button>
+        <button onClick={() => setFixedWidthItems(!fixedWidthItems)}>
+            Use {fixedWidthItems ? "variable" : "fixed"} width items
         </button>
         <button onClick={() => setShowCarousel(!showCarousel)}>
             {showCarousel ? "Hide carousel" : "Show carousel"}
+        </button>
+        <button onClick={() => setScrollToMiddle(!scrollToMiddle)}>
+            Set scroll mode to {scrollToMiddle ? "ScrollToLeft" : "ScrollToMiddle"}
+        </button>
+        <button onClick={() => setScrollIndex(5)}>
+            Scroll to 5
         </button>
     </>;
 }
