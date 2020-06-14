@@ -1,5 +1,8 @@
 
-const CAN_ANIMATE = !!window.requestAnimationFrame;
+const CAN_ANIMATE = (
+    typeof window.requestAnimationFrame === "function" &&
+    typeof window.cancelAnimationFrame === "function"
+);
 
 export type EasingFunction = (time: number, start: number, delta: number, duration: number) => number;
 
