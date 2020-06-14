@@ -17,9 +17,13 @@ interface ViewportInfo {
 
 interface ItemInfo {
     el: HTMLDivElement;
-    ref: React.LegacyRef<HTMLDivElement>,
     offsetLeft: number;
     itemWidth: number;
+}
+
+interface ItemCacheEntry {
+    el: HTMLDivElement;
+    ref: React.LegacyRef<HTMLDivElement>;
 }
 
 enum ItemVisibility {
@@ -95,7 +99,7 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
     private animation = null as AnimationHandle | null;
     
     private viewport = null as HTMLDivElement | null;
-    private itemInfoCache = [] as Array<ItemInfo | null>;
+    private itemCache = [] as Array<ItemCacheEntry | null>;
 
     public render() {
         const lastItemIndex = this.props.children.length - 1;
@@ -166,7 +170,7 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
 
     private acceptItemRef(index: number): React.LegacyRef<HTMLDivElement> {
         // Do we already have an entry for this position?
-        const cached = this.itemInfoCache[index];
+        const cached = this.itemCache[index];
         if (cached) {
             return cached.ref;
         }
@@ -174,12 +178,11 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
         const ref: React.LegacyRef<HTMLDivElement> = (el) => {
             if (el) {
                 // This DOM element is being added. Update the cache
-                const { offsetLeft, clientWidth } = el;
-                this.itemInfoCache[index] = { el, ref, offsetLeft, itemWidth: clientWidth };
+                this.itemCache[index] = { el, ref };
             }
             else {
                 // This DOM element is being removed. Clean up the cache
-                this.itemInfoCache[index] = null;
+                this.itemCache[index] = null;
             }
         };
         return ref;
@@ -230,11 +233,15 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
             throw new Error(`Item index out of bounds: ${index}`);
         }
         // NOTE: Item width and position information is assumed to be fixed/unchanging and is cached on mount
-        const itemInfo = this.itemInfoCache[index];
-        if (!itemInfo) {
+        const cached = this.itemCache[index];
+        if (!cached) {
             throw new Error("Tried to read item cache before item mounted");
         }
-        return itemInfo;
+        return {
+            el: cached.el,
+            itemWidth: cached.el.clientWidth,
+            offsetLeft: cached.el.offsetLeft,
+        };
     }
 
     private getScrollOffset(viewport: ViewportInfo, item: ItemInfo): number {
@@ -265,6 +272,7 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
         this.animation.end.then((completed) => {
             if (completed) {
                 this.animation = null;
+                this.updateScrollState();
             }
         });
     }
