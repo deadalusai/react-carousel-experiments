@@ -11,12 +11,12 @@ const item = (index: number, max: number, fixedWidth: boolean) => {
 const makeItems = (count: number, fixedWidth: boolean) => new Array(count).fill(0).map((_, index) => item(index, count, fixedWidth));
 
 export function App() {
-    const [fixedWidthItems, setFixedWidthItems] = React.useState(true);
     const [itemCount, setItemCount] = React.useState(15);
     const [showCarousel, setShowCarousel] = React.useState(true);
     const [scrollToMiddle, setScrollToMiddle] = React.useState(true);
     const [scrollIndex, setScrollIndex] = React.useState(6);
-    const items = makeItems(itemCount, fixedWidthItems);
+    const itemsFixedWidth = makeItems(itemCount, true);
+    const itemsVariableWidth = makeItems(itemCount, false);
     const containerStyle: React.CSSProperties = {
         height: '200px',
         width: '750px', // 5 x 150
@@ -31,7 +31,7 @@ export function App() {
                     scrollDurationMs={300}
                     scrollIndex={scrollIndex}
                     scrollIndexChanged={setScrollIndex}>
-                    {items.map(x =>
+                    {itemsFixedWidth.map(x =>
                         <div key={x.name} style={{ width: x.width, backgroundColor: x.color }}>
                             <h4>{x.name}</h4>
                             <p>({x.width})</p>
@@ -46,9 +46,6 @@ export function App() {
         </button>
         <button onClick={() => setItemCount(Math.max(0, itemCount - 1))}>
             Remove item
-        </button>
-        <button onClick={() => setFixedWidthItems(!fixedWidthItems)}>
-            Use {fixedWidthItems ? "variable" : "fixed"} width items
         </button>
         <button onClick={() => setShowCarousel(!showCarousel)}>
             {showCarousel ? "Hide carousel" : "Show carousel"}
@@ -67,7 +64,7 @@ export function App() {
                     scrollDurationMs={300}
                     scrollIndex={scrollIndex}
                     scrollIndexChanged={setScrollIndex}>
-                    {items.map(x =>
+                    {itemsFixedWidth.map(x =>
                         <div key={x.name} style={{ width: x.width, backgroundColor: x.color }}>
                             <h4>{x.name}</h4>
                             <p>({x.width})</p>
@@ -83,7 +80,7 @@ export function App() {
                     scrollDurationMs={300}
                     scrollIndex={scrollIndex}
                     scrollIndexChanged={setScrollIndex}>
-                    {items.map(x =>
+                    {itemsVariableWidth.map(x =>
                         <div key={x.name} style={{ width: x.width, backgroundColor: x.color }}>
                             <h4>{x.name}</h4>
                             <p>({x.width})</p>
@@ -99,7 +96,7 @@ export function App() {
                     scrollDurationMs={300}
                     scrollIndex={scrollIndex}
                     scrollIndexChanged={setScrollIndex}>
-                    {items.map(x =>
+                    {itemsFixedWidth.map(x =>
                         <div key={x.name} style={{ width: x.width, backgroundColor: x.color }}>
                             <h4>{x.name}</h4>
                             <p>({x.width})</p>
