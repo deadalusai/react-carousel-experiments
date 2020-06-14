@@ -291,10 +291,6 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
                 middleOfViewportIndex = itemIndex;
             }
         }
-        // Handle empty collection or zero-width items
-        if (!isFinite(minVisibleIndex)) {
-            minVisibleIndex = 0;
-        }
         const scrollBehavior = this.props.scrollBehavior ?? DEFAULT_SCROLL_BEHAVIOR;
         const currentScrollIndex = (
             // The "scrollIndex" represents the left-most visible or partially visible item

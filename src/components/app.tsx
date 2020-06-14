@@ -59,6 +59,53 @@ export function App() {
         <button onClick={() => setScrollIndex(5)}>
             Scroll to 5
         </button>
+        {showCarousel &&
+            <section style={{ ...containerStyle, width: "150px" }}>
+                <Carousel
+                    scrollPageSize={1}
+                    scrollBehavior={scrollToMiddle ? "ScrollToMiddle" : "ScrollToLeft"}
+                    scrollDurationMs={300}
+                    scrollIndex={scrollIndex}
+                    scrollIndexChanged={setScrollIndex}>
+                    {items.map(x =>
+                        <div key={x.name} style={{ width: x.width, backgroundColor: x.color }}>
+                            <h4>{x.name}</h4>
+                            <p>({x.width})</p>
+                        </div>)}
+                </Carousel>
+            </section>}
+            
+        {showCarousel &&
+            <section style={{ ...containerStyle, width: "100%" }}>
+                <Carousel
+                    scrollPageSize={2}
+                    scrollBehavior={scrollToMiddle ? "ScrollToMiddle" : "ScrollToLeft"}
+                    scrollDurationMs={300}
+                    scrollIndex={scrollIndex}
+                    scrollIndexChanged={setScrollIndex}>
+                    {items.map(x =>
+                        <div key={x.name} style={{ width: x.width, backgroundColor: x.color }}>
+                            <h4>{x.name}</h4>
+                            <p>({x.width})</p>
+                        </div>)}
+                </Carousel>
+            </section>}
+            
+        {showCarousel &&
+            <section style={{ ...containerStyle, height: "400px" }}>
+                <Carousel
+                    scrollPageSize={3}
+                    scrollBehavior={"ScrollToLeft"}
+                    scrollDurationMs={300}
+                    scrollIndex={scrollIndex}
+                    scrollIndexChanged={setScrollIndex}>
+                    {items.map(x =>
+                        <div key={x.name} style={{ width: x.width, backgroundColor: x.color }}>
+                            <h4>{x.name}</h4>
+                            <p>({x.width})</p>
+                        </div>)}
+                </Carousel>
+            </section>}
     </>;
 }
 
