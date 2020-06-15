@@ -1,10 +1,8 @@
 import * as React from "react";
 
 import { classString } from "./util";
-import { Animator, AnimationHandle, easingFunctions } from "./animator";
 
 const DEFAULT_SCROLL_BEHAVIOR: CarouselScrollBehavior = "ScrollToLeft";
-const DEFAULT_SCROLL_DURATION_MS = 300; // ms
 const DEFAULT_SCROLL_PAGE_SIZE = 1;
 
 interface ViewportInfo {
@@ -95,14 +93,12 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
         isFullyScrolledRight: false,
     };
 
-    private animator = new Animator(easingFunctions.easeInOutQuad);
-    private animation = null as AnimationHandle | null;
-    
     private viewport = null as HTMLDivElement | null;
     private itemCache = [] as Array<ItemCacheEntry | null>;
 
     public render() {
         const lastItemIndex = this.props.children.length - 1;
+        const scrollBehavior = this.props.scrollBehavior ?? DEFAULT_SCROLL_BEHAVIOR;
         return <div className="bil-carousel">
             <div
                 ref={this.acceptViewportRef}
@@ -110,7 +106,10 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
                 className={classString(
                     "bil-carousel__container",
                     this.state.isFullyScrolledLeft && "bil-carousel__container--fully-scrolled-left",
-                    this.state.isFullyScrolledRight && "bil-carousel__container--fully-scrolled-right"
+                    this.state.isFullyScrolledRight && "bil-carousel__container--fully-scrolled-right",
+                    scrollBehavior === "ScrollToLeft" && "bil-carousel__container--snap-left",
+                    scrollBehavior === "ScrollToMiddle" && "bil-carousel__container--snap-middle",
+                    scrollBehavior === "ScrollToRight" && "bil-carousel__container--snap-right"
                 )}>
                 {this.props.children.map((child, index) =>
                     <div
@@ -195,12 +194,6 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
             this.updateScrollState();
         }
     }
-
-    public componentWillUnmount() {
-        if (this.animation) {
-            this.animation.cancel();
-        }
-    }
     
     private handleScrollEvent() {
         this.updateScrollState();
@@ -251,25 +244,19 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
         );
     }
     
-    // TODO: Can we use CSS scroll-snap-type and scroll-snap-align?
-    // The user interaction is nice, but not sure how to trigger scrolls programmatically.
-
     private scrollToItem(targetScrollIndex: number) {
         this.setState({ targetScrollIndex });
-        if (this.animation) {
-            this.animation.cancel();
-        }
-        const durationMs = this.props.scrollDurationMs ?? DEFAULT_SCROLL_DURATION_MS;
         const viewport = this.getViewportInfo();
         const item = this.getItemInfo(targetScrollIndex);
         const scrollOffset = this.getScrollOffset(viewport, item);
-        this.animation = this.animator.startAnimation(viewport.el, 'scrollLeft', scrollOffset, durationMs);
-        this.animation.end.then((completed) => {
-            if (completed) {
-                this.animation = null;
-                this.updateScrollState();
-            }
-        });
+        
+        // TODO: This test may not work on IE or Safari?
+        if (viewport.el.scrollTo) {
+            viewport.el.scrollTo({ left: scrollOffset, behavior: "smooth", });
+        }
+        else {
+            viewport.el.scrollLeft = scrollOffset;
+        }
     }
 
     private updateScrollState() {
@@ -312,8 +299,8 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
             isFullyScrolledLeft: itemCount === 0 || minVisibleIndex === 0,
             isFullyScrolledRight: itemCount === 0 || maxVisibleIndex === (itemCount - 1),
         });
-        // Notify the caller as long as we're not currently animating.
-        if (currentScrollIndex !== this.props.scrollIndex && !this.animation) {
+        // Notify the caller
+        if (currentScrollIndex !== this.props.scrollIndex) {
             this.props.scrollIndexChanged?.(currentScrollIndex);
         }
     };
@@ -323,7 +310,7 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
         e.stopPropagation();
         // Pick a new scroll index
         // NOTE: If an animation is in progress then treat the "target" index as if it has already been scrolled to
-        const currentScrollIndex = this.animation ? this.state.targetScrollIndex : this.state.currentScrollIndex;
+        const currentScrollIndex = this.state.currentScrollIndex; // this.animation ? this.state.targetScrollIndex : this.state.currentScrollIndex;
         const targetScrollIndex = Math.max(
             0,
             currentScrollIndex - (this.props.scrollPageSize ?? DEFAULT_SCROLL_PAGE_SIZE)
@@ -336,7 +323,7 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
         e.stopPropagation();
         // Pick a new scroll index
         // NOTE: If an animation is in progress then treat the "target" index as if it has already been scrolled to
-        const currentScrollIndex = this.animation ? this.state.targetScrollIndex : this.state.currentScrollIndex;
+        const currentScrollIndex = this.state.currentScrollIndex; // this.animation ? this.state.targetScrollIndex : this.state.currentScrollIndex;
         const targetScrollIndex = Math.min(
             this.props.children.length - 1,
             currentScrollIndex + (this.props.scrollPageSize ?? DEFAULT_SCROLL_PAGE_SIZE)

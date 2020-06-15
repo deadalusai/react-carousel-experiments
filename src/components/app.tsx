@@ -25,7 +25,7 @@ export function App() {
     return <>
         <section style={containerStyle}>
             <Carousel
-                scrollPageSize={3}
+                scrollPageSize={1}
                 scrollBehavior={scrollToMiddle ? "ScrollToMiddle" : "ScrollToLeft"}
                 scrollDurationMs={300}
                 scrollIndex={scrollIndex}
