@@ -79,7 +79,6 @@ export interface ICarouselProps {
 }
 
 interface ICarouselState {
-    targetScrollIndex: number;
     currentScrollIndex: number;
     isFullyScrolledLeft: boolean;
     isFullyScrolledRight: boolean;
@@ -87,7 +86,6 @@ interface ICarouselState {
 
 export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState> {
     public state = {
-        targetScrollIndex: 0,
         currentScrollIndex: 0,
         isFullyScrolledLeft: false,
         isFullyScrolledRight: false,
@@ -247,7 +245,6 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
     }
     
     private scrollToItem(targetScrollIndex: number) {
-        this.setState({ targetScrollIndex });
         const viewport = this.getViewportInfo();
         const item = this.getItemInfo(targetScrollIndex);
         const scrollOffset = this.getScrollOffset(viewport, item);
@@ -310,11 +307,9 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
         e.preventDefault();
         e.stopPropagation();
         // Pick a new scroll index
-        // NOTE: If an animation is in progress then treat the "target" index as if it has already been scrolled to
-        const currentScrollIndex = this.state.currentScrollIndex; // this.animation ? this.state.targetScrollIndex : this.state.currentScrollIndex;
         const targetScrollIndex = Math.max(
             0,
-            currentScrollIndex - (this.props.scrollPageSize ?? DEFAULT_SCROLL_PAGE_SIZE)
+            this.state.currentScrollIndex - (this.props.scrollPageSize ?? DEFAULT_SCROLL_PAGE_SIZE)
         );
         this.scrollToItem(targetScrollIndex);
     };
@@ -323,11 +318,9 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
         e.preventDefault();
         e.stopPropagation();
         // Pick a new scroll index
-        // NOTE: If an animation is in progress then treat the "target" index as if it has already been scrolled to
-        const currentScrollIndex = this.state.currentScrollIndex; // this.animation ? this.state.targetScrollIndex : this.state.currentScrollIndex;
         const targetScrollIndex = Math.min(
             this.props.children.length - 1,
-            currentScrollIndex + (this.props.scrollPageSize ?? DEFAULT_SCROLL_PAGE_SIZE)
+            this.state.currentScrollIndex + (this.props.scrollPageSize ?? DEFAULT_SCROLL_PAGE_SIZE)
         );
         this.scrollToItem(targetScrollIndex);
     }
