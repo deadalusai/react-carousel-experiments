@@ -112,7 +112,6 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
                     this.state.isFullyScrolledLeft && "bil-carousel__container--fully-scrolled-left",
                     this.state.isFullyScrolledRight && "bil-carousel__container--fully-scrolled-right"
                 )}>
-                
                 {this.props.children.map((child, index) =>
                     <div
                         key={index}
@@ -125,9 +124,7 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
                         {child}
                     </div>
                 )}
-
             </div>
-            
             <div className="bil-carousel__controls">
                 <button
                     className={classString(
@@ -139,10 +136,6 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
                     disabled={this.state.isFullyScrolledLeft}>
                     Prev
                 </button>
-                <div>
-                    <p>{`current: ${this.state.currentScrollIndex}`}</p>
-                    <p>{`target: ${this.state.targetScrollIndex}`}</p>
-                </div>
                 <button
                     className={classString(
                         "bil-carousel__button",
@@ -160,11 +153,11 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
     private acceptViewportRef: React.LegacyRef<HTMLDivElement> = (el) => {
         this.viewport = el;
         if (this.viewport && this.props.scrollIndex) {
-            // At this stage all item refs should be caches.
+            // At this stage all item refs should be cached.
             // We can now calculate and set the initial scroll offset.
             const viewport = this.getViewportInfo();
             const item = this.getItemInfo(this.props.scrollIndex);
-            this.viewport.scrollLeft = this.getScrollOffset(viewport, item);
+            viewport.el.scrollLeft = this.getScrollOffset(viewport, item);
         }
     };
 

@@ -26,13 +26,23 @@ h6 { font-weight: 600; font-size: 100%; margin-bottom: 10px; }
     margin: 0;
     top: 50%;
     transform: translateY(-50%);
+    pointer-events: none;
+
+    opacity: 0; /* hidden by default, shown on hover only */
+    transition: opacity .15s ease-in;
     
     display: flex;
     justify-content: space-between;
 }
 
+
+.bil-carousel:hover .bil-carousel__controls {
+    opacity: 1;
+    transition: opacity .15s ease-in;
+}
+
 .bil-carousel__button {
-    
+    pointer-events: auto;
 }
 
 .bil-carousel__container {
