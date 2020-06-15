@@ -37,35 +37,49 @@ export function App() {
                     </div>)}
             </Carousel>
         </section>
-        <div>
-            {`scrollIndex: ${scrollIndex}`}
-        </div>
-        <button onClick={() => setItemCount(itemCount + 1)}>
-            Add item
-        </button>
-        <button onClick={() => setItemCount(Math.max(0, itemCount - 1))}>
-            Remove item
-        </button>
-        <button onClick={() => setScrollToMiddle(!scrollToMiddle)}>
-            Set scroll mode to {scrollToMiddle ? "ScrollToLeft" : "ScrollToMiddle"}
-        </button>
-        <button onClick={() => setScrollIndex(5)}>
-            Scroll to 5
-        </button>
-        <button onClick={() => setUsedFixedWidth(!useFixedWidth)}>
-            Use {useFixedWidth ? "variable" : "fixed"} width items
-        </button>
-        <button onClick={() => setShowCarousels(!showCarousels)}>
-            {showCarousels ? "Hide" : "Show"} other carousels
-        </button>
+        <section>
+            <div style={{ marginTop: '5px', marginBottom: '5px', color: "#fff" }}>
+                {`scrollIndex: ${scrollIndex}`}
+            </div>
+            <button onClick={() => setItemCount(itemCount + 1)}>
+                Add item
+            </button>
+            <button onClick={() => setItemCount(Math.max(0, itemCount - 1))}>
+                Remove item
+            </button>
+            <button onClick={() => setScrollToMiddle(!scrollToMiddle)}>
+                Set scroll mode to {scrollToMiddle ? "ScrollToLeft" : "ScrollToMiddle"}
+            </button>
+            <button onClick={() => setScrollIndex(5)}>
+                Scroll to 5
+            </button>
+            <button onClick={() => setUsedFixedWidth(!useFixedWidth)}>
+                Use {useFixedWidth ? "variable" : "fixed"} width items
+            </button>
+            <button onClick={() => setShowCarousels(!showCarousels)}>
+                {showCarousels ? "Hide" : "Show"} other carousels
+            </button>
+        </section>
         {showCarousels && <>
-            <section style={{ ...containerStyle, height: "300px" }}>
+            <section style={{ ...containerStyle }}>
                 <Carousel
                     scrollPageSize={1}
-                    scrollBehavior={scrollToMiddle ? "ScrollToMiddle" : "ScrollToLeft"}
+                    scrollBehavior="ScrollToRight"
                     scrollDurationMs={300}
-                    scrollIndex={scrollIndex}
-                    scrollIndexChanged={setScrollIndex}>
+                    scrollIndex={scrollIndex}>
+                    {items.map(x =>
+                        <div key={x.name} style={{ width: x.width, backgroundColor: x.color }}>
+                            <h4>{x.name}</h4>
+                            <p>({x.width})</p>
+                        </div>)}
+                </Carousel>
+            </section>
+            <section style={{ ...containerStyle }}>
+                <Carousel
+                    scrollPageSize={1}
+                    scrollBehavior="ScrollToLeft"
+                    scrollDurationMs={300}
+                    scrollIndex={scrollIndex}>
                     {items.map(x =>
                         <div key={x.name} style={{ width: x.width, backgroundColor: x.color }}>
                             <h4>{x.name}</h4>

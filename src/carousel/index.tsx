@@ -58,7 +58,7 @@ function calculateIsItemInMiddleOfViewport(viewport: ViewportInfo, item: ItemInf
     return itemLeft <= viewport.viewportCenter && itemRight >= viewport.viewportCenter;
 }
 
-export type CarouselScrollBehavior = "ScrollToLeft" | "ScrollToMiddle";
+export type CarouselScrollBehavior = "ScrollToLeft" | "ScrollToMiddle" | "ScrollToRight";
 
 export interface ICarouselProps {
     /** The time in MS over which the animation should play */
@@ -244,6 +244,8 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
             (scrollBehavior === "ScrollToLeft") ? item.offsetLeft :
             // Find the scrollLeft of the viewport required to place the item in the middle of the viewport.
             (scrollBehavior === "ScrollToMiddle") ? Math.max(0, item.offsetLeft - ((viewport.viewportWidth / 2) - (item.itemWidth / 2))) :
+            // Find the scrollLeft of the viewport required to place the item in the middle of the viewport.
+            (scrollBehavior === "ScrollToRight") ? Math.max(0, item.offsetLeft + item.itemWidth - viewport.viewportWidth):
             // Unknown scroll behavior    
             NaN
         );
@@ -276,6 +278,7 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
         // Determine which index we're scrolled
         let middleOfViewportIndex = 0;
         let minPartialIndex = Infinity;
+        let maxPartialIndex = 0;
         let minVisibleIndex = Infinity;
         let maxVisibleIndex = 0;
         for (let itemIndex = 0; itemIndex < itemCount; itemIndex++) {
@@ -283,6 +286,7 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
             const visibility = calculateItemVisibility(viewport, item);
             if (visibility === ItemVisibility.partiallyVisible) {
                 minPartialIndex = Math.min(minPartialIndex, itemIndex);
+                maxPartialIndex = Math.max(maxPartialIndex, itemIndex);
             }
             else if (visibility === ItemVisibility.fullyVisible) {
                 minVisibleIndex = Math.min(minVisibleIndex, itemIndex);
@@ -298,6 +302,8 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
             (scrollBehavior === "ScrollToLeft") ? Math.min(minVisibleIndex, minPartialIndex) :
             // The "scrollIndex" represents the item straddling the middle of the viewport
             (scrollBehavior === "ScrollToMiddle") ? middleOfViewportIndex :
+            // The "scrollIndex" represents the right-most visible or partially visible item
+            (scrollBehavior === "ScrollToRight") ? Math.max(maxVisibleIndex, maxPartialIndex) :
             // Unknown scroll behavior    
             NaN
         );
