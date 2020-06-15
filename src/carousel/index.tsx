@@ -99,54 +99,56 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
     public render() {
         const lastItemIndex = this.props.children.length - 1;
         const scrollBehavior = this.props.scrollBehavior ?? DEFAULT_SCROLL_BEHAVIOR;
-        return <div className="bil-carousel">
-            <div
-                ref={this.acceptViewportRef}
-                onScroll={() => this.handleScrollEvent()}
-                className={classString(
-                    "bil-carousel__container",
-                    this.state.isFullyScrolledLeft && "bil-carousel__container--fully-scrolled-left",
-                    this.state.isFullyScrolledRight && "bil-carousel__container--fully-scrolled-right",
-                    scrollBehavior === "ScrollToLeft" && "bil-carousel__container--snap-left",
-                    scrollBehavior === "ScrollToMiddle" && "bil-carousel__container--snap-middle",
-                    scrollBehavior === "ScrollToRight" && "bil-carousel__container--snap-right"
-                )}>
-                {this.props.children.map((child, index) =>
-                    <div
-                        key={index}
-                        ref={this.acceptItemRef(index)}
+        return (
+            <div className={classString(
+                "bil-carousel",
+                this.state.isFullyScrolledLeft && "bil-carousel--fully-scrolled-left",
+                this.state.isFullyScrolledRight && "bil-carousel--fully-scrolled-right",
+                scrollBehavior === "ScrollToLeft" && "bil-carousel--snap-left",
+                scrollBehavior === "ScrollToMiddle" && "bil-carousel--snap-middle",
+                scrollBehavior === "ScrollToRight" && "bil-carousel--snap-right"
+            )}>
+                <div
+                    ref={this.acceptViewportRef}
+                    onScroll={() => this.handleScrollEvent()}
+                    className="bil-carousel__container">
+                    {this.props.children.map((child, index) =>
+                        <div
+                            key={index}
+                            ref={this.acceptItemRef(index)}
+                            className={classString(
+                                "bil-carousel__item",
+                                index === 0 && "bil-carousel__item--first",
+                                index === lastItemIndex && "bil-carousel__item--last"
+                            )}>
+                            {child}
+                        </div>
+                    )}
+                </div>
+                <div className="bil-carousel__controls">
+                    <button
                         className={classString(
-                            "bil-carousel__item",
-                            index === 0 && "bil-carousel__item--first",
-                            index === lastItemIndex && "bil-carousel__item--last"
-                        )}>
-                        {child}
-                    </div>
-                )}
+                            "bil-carousel__button",
+                            "bil-carousel__button--left",
+                            this.state.isFullyScrolledLeft && "bil-carousel__button--disabled",
+                        )}
+                        onClick={e => this.scrollLeft(e)}
+                        disabled={this.state.isFullyScrolledLeft}>
+                        Prev
+                    </button>
+                    <button
+                        className={classString(
+                            "bil-carousel__button",
+                            "bil-carousel__button--right",
+                            this.state.isFullyScrolledRight && "bil-carousel__button--disabled",
+                        )}
+                        onClick={e => this.scrollRight(e)}
+                        disabled={this.state.isFullyScrolledRight}>
+                        Next
+                    </button>
+                </div>
             </div>
-            <div className="bil-carousel__controls">
-                <button
-                    className={classString(
-                        "bil-carousel__button",
-                        "bil-carousel__button--left",
-                        this.state.isFullyScrolledLeft && "bil-carousel__button--disabled",
-                    )}
-                    onClick={e => this.scrollLeft(e)}
-                    disabled={this.state.isFullyScrolledLeft}>
-                    Prev
-                </button>
-                <button
-                    className={classString(
-                        "bil-carousel__button",
-                        "bil-carousel__button--right",
-                        this.state.isFullyScrolledRight && "bil-carousel__button--disabled",
-                    )}
-                    onClick={e => this.scrollRight(e)}
-                    disabled={this.state.isFullyScrolledRight}>
-                    Next
-                </button>
-            </div>
-        </div>;
+        );
     }
     
     private acceptViewportRef: React.LegacyRef<HTMLDivElement> = (el) => {
@@ -249,8 +251,7 @@ export class Carousel extends React.PureComponent<ICarouselProps, ICarouselState
         const viewport = this.getViewportInfo();
         const item = this.getItemInfo(targetScrollIndex);
         const scrollOffset = this.getScrollOffset(viewport, item);
-        
-        // TODO: This test may not work on IE or Safari?
+        // TODO: This test may not work on Safari?
         if (viewport.el.scrollTo) {
             viewport.el.scrollTo({ left: scrollOffset, behavior: "smooth", });
         }

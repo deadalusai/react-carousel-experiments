@@ -8,7 +8,13 @@ const item = (index: number, max: number, fixedWidth: boolean) => {
         color: hsbToRgb(index * (360 / max), 100, 100),
     };
 };
-const makeItems = (count: number, fixedWidth: boolean) => new Array(count).fill(0).map((_, index) => item(index, count, fixedWidth));
+const makeItems = (count: number, fixedWidth: boolean) => {
+    const items = [];
+    for (let i = 0; i < count; i++) {
+        items[i] = item(i, count, fixedWidth);
+    }
+    return items;
+};
 
 export function App() {
     const [itemCount, setItemCount] = React.useState(15);

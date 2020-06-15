@@ -35,7 +35,6 @@ h6 { font-weight: 600; font-size: 100%; margin-bottom: 10px; }
     justify-content: space-between;
 }
 
-
 .bil-carousel:hover .bil-carousel__controls {
     opacity: 1;
     transition: opacity .15s ease-in;
@@ -71,12 +70,12 @@ h6 { font-weight: 600; font-size: 100%; margin-bottom: 10px; }
     flex: 0 0 auto;
     display: flex;
 }
-.bil-carousel__container--snap-left .bil-carousel__item {
+.bil-carousel--snap-left .bil-carousel__item {
     scroll-snap-align: start;
 }
-.bil-carousel__container--snap-middle .bil-carousel__item {
+.bil-carousel--snap-middle .bil-carousel__item {
     scroll-snap-align: center;
 }
-.bil-carousel__container--snap-right .bil-carousel__item {
+.bil-carousel--snap-right .bil-carousel__item {
     scroll-snap-align: end;
 }
